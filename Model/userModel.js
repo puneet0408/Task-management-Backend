@@ -4,14 +4,21 @@ const UserSchema = new mongoose.Schema({
     type: String,
     required: [true, "Name is required Field"],
   },
+  company_name: {
+    type: String,
+    required: [true, "Company Name is required Field"],
+  },
   email: {
     type: String,
     required: [true, "Email is required Field"],
     unique: true,
   },
-  password: {
+  resetPasswordToken: String,
+  resetPasswordExpire: Date,
+  password: String,
+  status: {
     type: String,
-    required: true,
+    default: "pending",
   },
   refreshToken: [
     {
@@ -31,8 +38,8 @@ const UserSchema = new mongoose.Schema({
   ],
   role: {
     type: String,
-    enum:["superadmin","admin","manager","employee"],
-    default:["employee"]
+    enum: ["superadmin", "admin", "manager", "employee"],
+    default: ["employee"],
   },
   address: {
     type: String,

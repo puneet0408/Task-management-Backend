@@ -1,11 +1,18 @@
 import express from "express";
-import { getAllCompanies , createCompany  , getCompanybyID , updateCompany , deleteCompany} from "./../controlers/companyColtroler.js";
- const CompanyRoutes = express.Router();
+import {
+  getAllCompanies,
+  createCompany,
+  getCompanybyID,
+  updateCompany,
+  deleteCompany,
+} from "./../controlers/companyColtroler.js";
+import { authenticate, authorized } from "../middleware/auth.js";
+const CompanyRoutes = express.Router();
 CompanyRoutes.route("/")
-  .get(getAllCompanies)
-  .post(createCompany);
+  .get(authenticate, authorized, getAllCompanies)
+  .post(authenticate, authorized, createCompany);
 CompanyRoutes.route("/:id")
-  .get(getCompanybyID)
-  .patch(updateCompany)
-  .delete(deleteCompany);
-  export default CompanyRoutes;
+  .get(authenticate, authorized,getCompanybyID)
+  .patch(authenticate, authorized, updateCompany)
+  .delete(authenticate, authorized, deleteCompany);
+export default CompanyRoutes;

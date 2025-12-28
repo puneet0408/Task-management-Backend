@@ -2,13 +2,40 @@ import { CompanyModel } from "../Model/companyModel.js";
 
 export const getAllCompanies = async (req, res) => {
   try {
-    const fetchCompany = await CompanyModel.find();
+    const {
+      dateFrom,
+      dateTo,
+      searchValue,
+      sortFIeld,
+      sortDirection,
+      limit = 10,
+      offset = 0,
+    } = req.query;
+    let query = {};
+    if (dateFrom && dateTo) {
+      query.createdAt = {
+        $gte: new Date(dateFrom),
+        $lte: new Date(dateTo + "T23:59:59.999Z"),
+      };
+    }
+    if (searchValue) {
+      query.$text = { $search: searchValue };
+    }
+    let mongoQuery = CompanyModel.find(query);
+    if (sortFIeld) {
+      mongoQuery = mongoQuery.sort({
+        [sortFIeld]: sortDirection === "asc" ? 1 : -1,
+      });
+    }
+    const companies = await mongoQuery
+      .skip(Number(offset))
+      .limit(Number(limit));
+    const totalCount = await CompanyModel.countDocuments(query);
     res.status(200).json({
       status: "success",
       data: {
-        length: fetchCompany.length,
-        fetchCompany,
-        msg: "data get poperly",
+        length: totalCount,
+        companies,
       },
     });
   } catch (err) {
@@ -40,8 +67,8 @@ export const getCompanybyID = async (req, res) => {
 };
 export const createCompany = async (req, res) => {
   try {
-    console.log(req.body,);
-    
+    console.log(req.body);
+
     const company = await CompanyModel.create(req.body);
     res.status(201).json({
       status: "Success",
