@@ -4,7 +4,6 @@ import { UsersModel } from "../Model/userModel.js";
 export const authenticate = (req, res, next) => {
   try {
     const accessToken = req.cookies.accessToken;
-    console.log(accessToken,"accesstokken");
     if (!accessToken) {
       return res.status(401).json({
         data: {
@@ -13,7 +12,6 @@ export const authenticate = (req, res, next) => {
       });
     }
     const payload = verifyAccessToken(accessToken);
-        console.log(payload,"payload");
     if (!payload) {
       return res.status(401).json({
         data: {
@@ -38,7 +36,6 @@ export const authenticate = (req, res, next) => {
 
 export const authorized = async (req, res, next) => {
   try {
-    console.log(req.user,"roleUSers");
     
     if (!req.user) {
       return res.status(403).json({
@@ -55,7 +52,6 @@ export const authorized = async (req, res, next) => {
       });
     }
     const user = await UsersModel.findById(id);
-console.log(user,"user");
 
     if (!user || !user.role) {
       return res.status(403).json({
@@ -63,18 +59,18 @@ console.log(user,"user");
         status: false
       });
     }
+    req.loginUser = user;
     if (user.role === "superadmin") {
       req.filterRole = ["admin"];
     }
-
     if (user.role === "admin") {
       req.filterRole = ["employee", "manager"]; 
-      req.companyid = user.companyid;
+      req.companyId = user.company_name;
     }
 
     if (user.role === "manager") {
       req.filterRole = ["employee"];
-      req.companyid = user.companyid;
+      req.companyId = user.company_name;
     }
     next();
   } catch (error) {

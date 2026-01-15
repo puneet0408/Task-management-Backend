@@ -8,7 +8,7 @@ const companySchema = new mongoose.Schema(
       unique: true,
       trim: true,
     },
-    owner_name  : {
+    owner_name: {
       type: String,
       required: [true, "Owner name is a required field"],
     },
@@ -18,9 +18,13 @@ const companySchema = new mongoose.Schema(
       unique: true,
       lowercase: true,
     },
-    no_of_user: {
-      type: Number,
-      default: 0,
+    limit: {
+      maxUsers: Number,
+      maxProjects: Number,
+    },
+    usage: {
+      usersCount: Number,
+      projectsCount: Number,
     },
     address: {
       type: String,
@@ -39,8 +43,12 @@ const companySchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["active", "inactive"]  ,
+      enum: ["active", "suspended"],
       default: "active",
+    },
+    isDeleted: {
+      type: Boolean,
+      default: false,
     },
   },
   { timestamps: true }

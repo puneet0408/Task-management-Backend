@@ -1,4 +1,5 @@
 import { UsersModel } from "../Model/userModel.js";
+import { CompanyModel } from "../Model/companyModel.js";
 import nodemailer from "nodemailer";
 import crypto from "crypto";
 import dotenv from "dotenv";
@@ -17,7 +18,15 @@ export const getAllUsers = async (req, res) => {
     } = req.query;
     let query = {};
     if (req.filterRole) {
-      query.role = req.filterRole;
+      if (Array.isArray(req.filterRole)) {
+        query.role = { $in: req.filterRole };
+      } else {
+        query.role = req.filterRole;
+      }
+    }
+    query.isDeleted = false;
+    if (req.companyId) {
+      query.company_name = req.companyId;
     }
     if (dateFrom && dateTo) {
       query.createdAt = {
@@ -26,7 +35,10 @@ export const getAllUsers = async (req, res) => {
       };
     }
     if (searchValue) {
-      query.$text = { $search: searchValue };
+      query.$or = [
+        { name: { $regex: searchValue, $options: "i" } },
+        { email: { $regex: searchValue, $options: "i" } },
+      ];
     }
     let mongoQuery = UsersModel.find(query);
     if (sortFIeld) {
@@ -55,14 +67,32 @@ export const getAllUsers = async (req, res) => {
 
 export const postUsers = async (req, res) => {
   try {
+    const { companyId } = req;
+    let company_name;
+    if (req.body.company_name) {
+      company_name = req.body.company_name;
+    } else {
+      company_name = companyId;
+    }
+    const Companydtails = CompanyModel.findById(company_name);
+    if (!Companydtails) {
+      return res.status(401).json({
+        data: {
+          msg: "Company not found",
+        },
+      });
+    }
     const fetchusers = new UsersModel({
       name: req.body.name,
       email: req.body.email,
+      contact_no: res.body.contact_no,
       role: req.body.role,
-      company_name: req.body.company_name,
+      company_name: company_name,
+      project_name: Array.isArray(req.body.project_name)
+        ? req.body.project_name
+        : [req.body.project_name],
     });
     const token = crypto.randomBytes(32).toString("hex");
-
     const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
     fetchusers.resetPasswordToken = hashedToken;
     fetchusers.resetPasswordExpire = Date.now() + 24 * 60 * 60 * 1000;
@@ -72,7 +102,6 @@ export const postUsers = async (req, res) => {
       service: "gmail",
       auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
     });
-
     await transporter.sendMail({
       from: `"My App" <${process.env.EMAIL_USER}>`,
       to: fetchusers.email,
@@ -92,13 +121,14 @@ export const postUsers = async (req, res) => {
         </div>
       `,
     });
-
     res.status(200).json({
+      status: 201,
       msg: "User created & email sent successfully",
     });
   } catch (error) {
     console.error(error);
     res.status(500).json({
+      error,
       msg: "Internal server error",
     });
   }
@@ -112,7 +142,7 @@ export const updateUsers = async (req, res) => {
       runValidators: true,
     });
     res.status(200).json({
-      status: "success",
+      status: 201,
       data: {
         updateUsers,
         status: 201,
@@ -130,7 +160,11 @@ export const updateUsers = async (req, res) => {
 export const deleteUsers = async (req, res) => {
   try {
     const id = req.params.id;
-    const deleteUsers = await UsersModel.findByIdAndDelete(id);
+    await UsersModel.findByIdAndUpdate(id, {
+      $set: {
+        isDeleted: true,
+      },
+    });
     res.status(200).json({
       status: "success",
       data: {
@@ -146,3 +180,23 @@ export const deleteUsers = async (req, res) => {
   }
 };
 
+export const getProfile = async (req, res) => {
+  try {
+    const id = req.params.id;
+    const getuserByid = await UsersModel.findById(id);
+
+    res.status(200).json({
+      status: "success",
+      data: {
+        user: getuserByid,
+        status: 201,
+        msg: "data get poperly",
+      },
+    });
+  } catch (err) {
+    res.status(400).json({
+      status: 400,
+      msg: err.message,
+    });
+  }
+};

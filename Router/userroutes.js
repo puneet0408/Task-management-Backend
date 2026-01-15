@@ -6,6 +6,7 @@ import {
   deleteUsers,
   postUsers,
   updateUsers,
+  getProfile,
 } from "../controlers/usersController.js";
 import {
   UserRegister,
@@ -28,7 +29,8 @@ userRouter
   userRouter
   .route("/users/:id")
   .delete(authenticate, authorized, deleteUsers)
-  .patch(authenticate, authorized, updateUsers);
+  .patch(authenticate, authorized, updateUsers)
+  .get(authenticate, authorized, getProfile);
   userRouter
   .route("/set_password/:token").patch(createPassword);
 

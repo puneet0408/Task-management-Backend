@@ -18,6 +18,7 @@ export const getAllCompanies = async (req, res) => {
         $lte: new Date(dateTo + "T23:59:59.999Z"),
       };
     }
+       query.isDeleted = false;
     if (searchValue) {
       query.$text = { $search: searchValue };
     }
@@ -28,7 +29,7 @@ export const getAllCompanies = async (req, res) => {
       });
     }
     const companies = await mongoQuery
-      .skip(Number(offset))
+      .skip(Number(offset)) 
       .limit(Number(limit));
     const totalCount = await CompanyModel.countDocuments(query);
     res.status(200).json({
@@ -67,8 +68,6 @@ export const getCompanybyID = async (req, res) => {
 };
 export const createCompany = async (req, res) => {
   try {
-    console.log(req.body);
-
     const company = await CompanyModel.create(req.body);
     res.status(201).json({
       status: "Success",
@@ -122,7 +121,13 @@ export const deleteCompany = async (req, res) => {
       return;
     }
 
-    const DeleteCompany = await CompanyModel.findByIdAndDelete(id);
+    await CompanyModel.findByIdAndUpdate(id, 
+        {
+        $set: {
+          "isDeleted": true,
+        },
+      },
+    );
     res.status(200).json({
       status: "success",
       data: {

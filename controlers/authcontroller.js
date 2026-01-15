@@ -12,7 +12,6 @@ dotenv.config();
 export const UserRegister = async (req, res) => {
   try {
     const { name, email, password } = req.body;
-    console.log(name, email, password, "adas");
 
     if (!name || !email || !password) {
       return res.status(400).json({
@@ -31,7 +30,6 @@ export const UserRegister = async (req, res) => {
     }
 
     const hashedPassword = await gethashedPassword(password);
-    console.log(hashedPassword, "hashedPassword");
 
     const newUser = await UsersModel.create({
       name,
@@ -42,13 +40,10 @@ export const UserRegister = async (req, res) => {
       userId: newUser._id,
       email: newUser.email,
     };
-    console.log(payload, "payload");
 
     const accessToken = getAccessToken(payload);
-    console.log(accessToken, "accessToken");
 
     const refreshToken = getRefreshToken({ userId: newUser._id });
-    console.log(refreshToken, "refreshToken");
 
     const createCookies = getCookiesPayload();
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
@@ -117,7 +112,14 @@ export const userLogin = async (req, res) => {
           expiresAt,
         },
       },
+      $set:{
+        "preferences.activeProject": user?.preferences?.defaultProjectId,
+        "preferences.lastProjectId": user?.preferences?.defaultProjectId
+      }
     });
+    
+    
+
     res.cookie("refreshtoken", refreshToken, createCookies);
     res.cookie("accessToken", accessToken, createCookies);
     res.status(201).json({
@@ -137,7 +139,6 @@ export const userLogin = async (req, res) => {
 export const refreshtoken = async (req, res) => {
   try {
     const refreshToken = req.cookies.refreshtoken;
-    console.log(refreshToken, "refreshToken");
 
     if (!refreshToken) {
       return res.status(500).json({
@@ -147,7 +148,6 @@ export const refreshtoken = async (req, res) => {
       });
     }
     const isvalidToken = verifyRefreshTOken(refreshToken);
-    console.log(isvalidToken, "isvalidToken");
     if (!isvalidToken) {
       return res.status(500).json({
         data: {
@@ -156,7 +156,6 @@ export const refreshtoken = async (req, res) => {
       });
     }
     const user = await UsersModel.findById(isvalidToken?.userId);
-    console.log(user, "user");
     if (!user) {
       return res.status(500).json({
         data: {
@@ -167,7 +166,6 @@ export const refreshtoken = async (req, res) => {
     const getRefreshtokken = user?.refreshToken?.find(
       (t) => t?.token === refreshToken
     );
-    console.log(getRefreshtokken, "getRefreshtokken");
     if (!getRefreshtokken) {
       return res.status(500).json({
         data: {
@@ -182,12 +180,10 @@ export const refreshtoken = async (req, res) => {
         },
       });
     }
-    console.log("test");
     const payload = {
       userId: user._id,
       email: user.email,
     };
-    console.log(payload, "payload");
 
     const accessToken = getAccessToken(payload);
     const createCookies = getCookiesPayload();
@@ -308,17 +304,13 @@ export const createPassword = async (req, res) => {
         msg: "Token and password are required",
       });
     }
-    console.log("TOKEN FROM URL:", token);
 
     const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
-
-    console.log("HASHED TOKEN FROM URL:", hashedToken);
 
     const user = await UsersModel.findOne({
       resetPasswordToken: hashedToken,
       resetPasswordExpire: { $gt: Date.now() },
     });
-
     if (!user) {
       return res.status(400).json({
         msg: "Invalid or expired token",
