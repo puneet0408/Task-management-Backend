@@ -22,8 +22,8 @@ export const getAllSprint = async (req, res) => {
         },
       });
     }
-     if (req.loginUser?.preferences?.activeProject) {
-      query.projectId = req.loginUser?.preferences?.activeProject;
+     if (req.loginUser?.preferences?.activeProject?.projectId) {
+      query.projectId = req.loginUser?.preferences?.activeProject?.projectId;
     } else {
       return res.status(401).json({
         data: {
@@ -72,8 +72,7 @@ export const createSprint = async (req, res) => {
   try {
     const { companyId, user } = req;
     const userdetails = await UsersModel.findById(user?.id);
-    
-    const projectId = userdetails?.preferences?.activeProject;
+    const projectId = userdetails?.preferences?.activeProject?.projectId;
     const { sprintName, startDate, endDate } = req.body;
     if (!sprintName || !companyId || !projectId) {
       return res.status(400).json({

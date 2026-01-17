@@ -1,4 +1,5 @@
 import { UsersModel } from "../Model/userModel.js";
+import mongoose from "mongoose";
 import { CompanyModel } from "../Model/companyModel.js";
 import nodemailer from "nodemailer";
 import crypto from "crypto";
@@ -182,21 +183,79 @@ export const deleteUsers = async (req, res) => {
 
 export const getProfile = async (req, res) => {
   try {
-    const id = req.params.id;
-    const getuserByid = await UsersModel.findById(id);
+    const userId = req.params.id;
 
+    const pipeline = [
+      {
+        $match: {
+          _id: new mongoose.Types.ObjectId(userId),
+          isDeleted: false
+        }
+      },
+      {
+        $lookup: {
+          from: "companies",
+          let: { cid: "$company_name" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $eq: [
+                    "$_id",
+                    {
+                      $convert: {
+                        input: "$$cid",
+                        to: "objectId",
+                        onError: null,
+                        onNull: null
+                      }
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              $project: {
+                company_name: 1
+              }
+            }
+          ],
+          as: "company"
+        }
+      },
+      {
+        $unwind: {
+          path: "$company",
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $project: {
+          name: 1,
+          email: 1,
+          role: 1,
+          status: 1,
+          preferences: 1, 
+          createdAt: 1,
+          "company.company_name": 1
+        }
+      }
+    ];
+    const result = await UsersModel.aggregate(pipeline);
+    console.log(result,"result");
+    
     res.status(200).json({
       status: "success",
       data: {
-        user: getuserByid,
-        status: 201,
-        msg: "data get poperly",
-      },
+        user: result[0] || null,
+        msg: "Profile fetched successfully"
+      }
     });
   } catch (err) {
     res.status(400).json({
-      status: 400,
-      msg: err.message,
+      status: "fail",
+      msg: err.message
     });
   }
 };
+

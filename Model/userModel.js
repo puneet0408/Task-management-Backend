@@ -20,7 +20,10 @@ const UserSchema = new mongoose.Schema(
     preferences: {
       defaultProjectId: String,
       lastProjectId: String,
-      activeProject: String,
+      activeProject: {
+        projectId: String,
+        projectName: String,
+      },
     },
     resetPasswordToken: String,
     resetPasswordExpire: Date,
@@ -70,7 +73,7 @@ const UserSchema = new mongoose.Schema(
       default: false,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 UserSchema.index({
   name: "text",

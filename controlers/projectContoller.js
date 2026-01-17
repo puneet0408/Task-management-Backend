@@ -107,7 +107,7 @@ export const createProject = async (req, res) => {
       { uuid: companyId },
       {
         $inc: { "usage.projectsCount": 1 },
-      }
+      },
     );
     res.status(201).json({
       status: 201,
@@ -196,16 +196,17 @@ export const markDefaultProject = async (req, res) => {
       {
         $set: {
           "preferences.defaultProjectId": projectId,
-          "preferences.activeProject": projectId,
+          "preferences.activeProject.projectId": projectId,
+          "preferences.activeProject.projectName": project?.projectName,
         },
       },
-      { new: true }
+      { new: true },
     );
     return res.status(200).json({
       status: "success",
       message: "Default project updated successfully",
       data: {
-        activeProject: user.preferences.activeProject,
+        activeProject: user?.preferences?.activeProject?.projectName,
       },
     });
   } catch (error) {
@@ -233,16 +234,17 @@ export const markLastPreferenceProject = async (req, res) => {
       {
         $set: {
           "preferences.lastProjectId": projectId,
-          "preferences.activeProject": projectId,
+          "preferences.activeProject.projectId": projectId,
+          "preferences.activeProject.projectName": project?.projectName,
         },
       },
-      { new: true }
+      { new: true },
     );
     return res.status(200).json({
       status: "success",
       message: "Default project updated successfully",
       data: {
-        activeProject: user.preferences.activeProject,
+        activeProject: user?.preferences?.activeProject?.projectName,
       },
     });
   } catch (error) {

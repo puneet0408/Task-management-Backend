@@ -113,7 +113,7 @@ export const userLogin = async (req, res) => {
         },
       },
       $set:{
-        "preferences.activeProject": user?.preferences?.defaultProjectId,
+        "preferences.activeProject.projectId": user?.preferences?.defaultProjectId,
         "preferences.lastProjectId": user?.preferences?.defaultProjectId
       }
     });
