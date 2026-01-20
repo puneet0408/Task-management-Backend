@@ -17,47 +17,105 @@ export const getAllUsers = async (req, res) => {
       limit = 10,
       offset = 0,
     } = req.query;
-    let query = {};
+    let matchStage = { isDeleted: false };
     if (req.filterRole) {
-      if (Array.isArray(req.filterRole)) {
-        query.role = { $in: req.filterRole };
-      } else {
-        query.role = req.filterRole;
-      }
+      matchStage.role = Array.isArray(req.filterRole)
+        ? { $in: req.filterRole }
+        : req.filterRole;
     }
-    query.isDeleted = false;
     if (req.companyId) {
-      query.company_name = req.companyId;
+      matchStage.company_name = req.companyId;
     }
     if (dateFrom && dateTo) {
-      query.createdAt = {
+      matchStage.createdAt = {
         $gte: new Date(dateFrom),
-        $lte: new Date(dateTo + "T23:59:59.999Z"),
+        $lte: new Date(`${dateTo}T23:59:59.999Z`),
       };
     }
     if (searchValue) {
-      query.$or = [
+      matchStage.$or = [
         { name: { $regex: searchValue, $options: "i" } },
         { email: { $regex: searchValue, $options: "i" } },
       ];
     }
-    let mongoQuery = UsersModel.find(query);
-    if (sortFIeld) {
-      mongoQuery = mongoQuery.sort({
-        [sortFIeld]: sortDirection === "asc" ? 1 : -1,
-      });
-    }
-    const fetchusers = await mongoQuery
-      .skip(Number(offset))
-      .limit(Number(limit));
-    const totalCount = await UsersModel.countDocuments(query);
+    const sortStage = sortFIeld
+      ? { [sortFIeld]: sortDirection === "asc" ? 1 : -1 }
+      : { createdAt: -1 };
+    const pipeline = [
+      { $match: matchStage },
+      {
+        $lookup: {
+          from: "companies",
+          let: { cid: "$company_name" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $eq: [
+                    "$_id",
+                    {
+                      $convert: {
+                        input: "$$cid",
+                        to: "objectId",
+                        onError: null,
+                        onNull: null
+                      }
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              $project: {
+                company_name: 1
+              }
+            }
+          ],
+          as: "company"
+        }
+      },
+
+      { 
+        $unwind: { 
+          path: "$company", 
+          preserveNullAndEmptyArrays: true 
+        } 
+      },
+      {
+        $project: {
+          name: 1,
+          email: 1,
+          role: 1,
+          status: 1,
+          preferences: 1,              
+          createdAt: 1,
+          contact_no:1,
+          project_name:1,
+          city:1,
+          state:1,
+          country:1,
+          address:1,
+          "company.company_name": 1
+        }
+      },
+
+      { $sort: sortStage },
+      { $skip: Number(offset) },
+      { $limit: Number(limit) }
+    ];
+    const [users, totalCount] = await Promise.all([
+      UsersModel.aggregate(pipeline),
+      UsersModel.countDocuments(matchStage),
+    ]);
+
     res.status(200).json({
       status: "success",
       data: {
         length: totalCount,
-        users: fetchusers,
+        users,
       },
     });
+
   } catch (err) {
     res.status(400).json({
       status: "fail",
@@ -65,6 +123,7 @@ export const getAllUsers = async (req, res) => {
     });
   }
 };
+
 
 export const postUsers = async (req, res) => {
   try {
