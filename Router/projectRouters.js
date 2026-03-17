@@ -5,6 +5,7 @@ import {
   UpdateProject,
   DeleteProject,
   markDefaultProject,
+  markDefaultSprint,
   markLastPreferenceProject,
 } from "./../controlers/projectContoller.js";
 import { authenticate, authorized } from "../middleware/auth.js";
@@ -15,6 +16,7 @@ ProjectRoutes.route("/")
 ProjectRoutes.route("/:id")
   .patch(authenticate, authorized, UpdateProject)
   .delete(authenticate, authorized, DeleteProject);
+  ProjectRoutes.route("/markdefaultsprint/:sprintId").patch(authenticate,authorized,markDefaultSprint);
   ProjectRoutes.route("/markdefaultproject/:projectId").patch(authenticate,authorized,markDefaultProject);
    ProjectRoutes.route("/lastPreferenceproject/:projectId").patch(authenticate,authorized,markLastPreferenceProject);
 export default ProjectRoutes;

@@ -1,6 +1,7 @@
 import { ProjectModel } from "../Model/projectModel.js";
 import { CompanyModel } from "../Model/companyModel.js";
 import { UsersModel } from "../Model/userModel.js";
+import {SprintModel} from "../Model/sprintModel.js";
 
 export const getAllProjects = async (req, res) => {
   try {
@@ -207,6 +208,45 @@ export const markDefaultProject = async (req, res) => {
       message: "Default project updated successfully",
       data: {
         activeProject: user?.preferences?.activeProject?.projectName,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      status: "failed",
+      message: "Internal server error",
+    });
+  }
+};
+
+export const markDefaultSprint = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const sprintId = req.params.sprintId;
+      console.log(sprintId,"sprintId");
+    const Sprint = await SprintModel.findById(sprintId);
+    console.log(Sprint,"sprint");
+    
+    if (!Sprint) {
+      return res.status(404).json({
+        status: "failed",
+        message: "Sprint not found",
+      });
+    }
+    const user = await UsersModel.findByIdAndUpdate(
+      userId,
+      {
+        $set: {
+          "preferences.Activesprint.sprintId": sprintId,
+          "preferences.Activesprint.sprintName": Sprint?.sprintName,
+        },
+      },
+      { new: true },
+    );
+    return res.status(200).json({
+      status: "success",
+      message: "Default sprint updated successfully",
+      data: {
+        activesprint: user?.preferences?.Activesprint?.sprintId,
       },
     });
   } catch (error) {

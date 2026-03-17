@@ -3,7 +3,7 @@ import { UsersModel } from "../Model/userModel.js";
 
 export const authenticate = (req, res, next) => {
   try {
-    const accessToken = req.cookies.accessToken;
+    const accessToken = req?.cookies?.accessToken;
     if (!accessToken) {
       return res.status(401).json({
         data: {

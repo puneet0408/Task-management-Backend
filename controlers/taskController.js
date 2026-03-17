@@ -1,4 +1,4 @@
-import TaskModel from "../Model/taskModel";
+import { TaskModel } from "../Model/taskModel.js";
 
 export const getAllTask = async (req, res) => {
   try {
@@ -51,8 +51,8 @@ export const getAllTask = async (req, res) => {
    const pipeline = [
       { $match: matchStage },
       { $sort: sortStage },
-      { $skip: Number(offset) },
-      { $limit: Number(limit) }
+      { $skip: Number(offset) || 0 },
+      { $limit: Number(limit) || 10 }
     ];
       const tasks = await TaskModel.aggregate(pipeline);
      res.status(200).json({
@@ -96,6 +96,8 @@ export const createTask = async (req, res) => {
       priority,
       completedAt,
     } = req.body;
+    console.log(req.body,"resbody");
+    
     if (!companyId) {
       return res.status(400).json({
         data: {
@@ -103,6 +105,8 @@ export const createTask = async (req, res) => {
         },
       });
     }
+    console.log(companyId,"companyId");
+    
     if (!projectId) {
       return res.status(400).json({
         data: {
@@ -110,6 +114,8 @@ export const createTask = async (req, res) => {
         },
       });
     }
+    console.log(projectId,"projectId");
+    
     const payload = {
       title,
       companyId,
@@ -120,7 +126,7 @@ export const createTask = async (req, res) => {
       taskStatus,
       stage,
       type,
-      assignedTo,
+      assignedTo:assignedTo?.value,
       tags,
       originalTIme,
       RemainingTIme,
@@ -129,13 +135,21 @@ export const createTask = async (req, res) => {
       completedAt,
       createdBy,
     };
-    await TaskModel.create(payload);
+    console.log(payload,"payload");
+    
+    const task = await TaskModel.create(payload);
+    console.log(task,"tttt");
+    
     res.status(201).json({
+      task,
       status: 201,
       msg: "task created sucessfully",
     });
   } catch (error) {
+    console.log(error,"error");
+    
     res.status(400).json({
+      error,
       status: 400,
       msg: "Internal server error",
     });

@@ -142,10 +142,11 @@ export const postUsers = async (req, res) => {
         },
       });
     }
+    console.log(req.body.contact_no,"res.body.contact_no");
     const fetchusers = new UsersModel({
       name: req.body.name,
       email: req.body.email,
-      contact_no: res.body.contact_no,
+      contact_no: req.body.contact_no,
       role: req.body.role,
       company_name: company_name,
       project_name: Array.isArray(req.body.project_name)

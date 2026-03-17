@@ -7,6 +7,9 @@ const TaskSchema = new mongoose.Schema(
       required: [true, "task name is a required field"],
       trim: true,
     },
+    taskid:{
+      type:Number
+    },
     companyId: {
      type: mongoose.Schema.Types.ObjectId,
       ref: "companies",
@@ -50,12 +53,24 @@ const TaskSchema = new mongoose.Schema(
     },
     assignedTo: {
       type: mongoose.Schema.Types.ObjectId,
-      default: "none",
+        ref: "users", 
+  default: null,  
     },
-    tags: {
-      type: [String],
-      default: [],
+tags: [
+  {
+    label: {
+      type: String,
+      required: true,
+      trim: true,
     },
+    value: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+  },
+],
+
     originalTIme: {
       type: Number,
     },

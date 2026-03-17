@@ -20,6 +20,10 @@ const UserSchema = new mongoose.Schema(
     preferences: {
       defaultProjectId: String,
       lastProjectId: String,
+     Activesprint:{
+      sprintId:String,
+      sprintName:String,
+     },
       activeProject: {
         projectId: String,
         projectName: String,
