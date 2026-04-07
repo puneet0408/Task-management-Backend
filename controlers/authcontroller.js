@@ -285,8 +285,6 @@ export const logoutAllUser = async (req, res) => {
       status: 200,
     });
   } catch (error) {
-    console.log(error, "qwrq");
-
     res.status(500).json({
       data: {
         msg: "error while genetate",

@@ -6,7 +6,59 @@ import crypto from "crypto";
 import dotenv from "dotenv";
 dotenv.config();
 
-export const getAllUsers = async (req, res) => {
+export const getAllUsersWithLoginUser = async (req, res) => {
+  try {
+    let query = {};
+    if (req.companyId) {
+      query.company_name = req.companyId;
+    } else {
+      return res.status(401).json({
+        data: {
+          msg: "unothorized",
+        },
+      });
+    }
+    query.isDeleted = false;
+    const pipLine = [
+      { $match: query },
+      {
+        $project: {
+          name: 1,
+          company_name: 1,
+          email: 1,
+          status: 1,
+          role: 1,
+          city: 1,
+          address: 1,
+          contact_no: 1,
+          country: 1,
+          state: 1,
+          isDeleted: 1,
+          updatedAt: 1,
+          project_name: 1,
+          createdAt: 1,
+          updatedAt: 1,
+        },
+      },
+    ];
+    let users = await UsersModel.aggregate(pipLine);
+    res.status(200).json({
+      status: 200,
+      data: {
+        users,
+      },
+    });
+  } catch (error) {
+    res.status(401).json({
+      status: "Failed",
+      data: {
+        msg: "Internal server error",
+      },
+    });
+  }
+};
+
+export const getAllUsersWithoutloginuser = async (req, res) => {
   try {
     const {
       dateFrom,
@@ -58,28 +110,28 @@ export const getAllUsers = async (req, res) => {
                         input: "$$cid",
                         to: "objectId",
                         onError: null,
-                        onNull: null
-                      }
-                    }
-                  ]
-                }
-              }
+                        onNull: null,
+                      },
+                    },
+                  ],
+                },
+              },
             },
             {
               $project: {
-                company_name: 1
-              }
-            }
+                company_name: 1,
+              },
+            },
           ],
-          as: "company"
-        }
+          as: "company",
+        },
       },
 
-      { 
-        $unwind: { 
-          path: "$company", 
-          preserveNullAndEmptyArrays: true 
-        } 
+      {
+        $unwind: {
+          path: "$company",
+          preserveNullAndEmptyArrays: true,
+        },
       },
       {
         $project: {
@@ -87,21 +139,21 @@ export const getAllUsers = async (req, res) => {
           email: 1,
           role: 1,
           status: 1,
-          preferences: 1,              
+          preferences: 1,
           createdAt: 1,
-          contact_no:1,
-          project_name:1,
-          city:1,
-          state:1,
-          country:1,
-          address:1,
-          "company.company_name": 1
-        }
+          contact_no: 1,
+          project_name: 1,
+          city: 1,
+          state: 1,
+          country: 1,
+          address: 1,
+          "company.company_name": 1,
+        },
       },
 
       { $sort: sortStage },
       { $skip: Number(offset) },
-      { $limit: Number(limit) }
+      { $limit: Number(limit) },
     ];
     const [users, totalCount] = await Promise.all([
       UsersModel.aggregate(pipeline),
@@ -115,7 +167,6 @@ export const getAllUsers = async (req, res) => {
         users,
       },
     });
-
   } catch (err) {
     res.status(400).json({
       status: "fail",
@@ -123,7 +174,6 @@ export const getAllUsers = async (req, res) => {
     });
   }
 };
-
 
 export const postUsers = async (req, res) => {
   try {
@@ -142,7 +192,6 @@ export const postUsers = async (req, res) => {
         },
       });
     }
-    console.log(req.body.contact_no,"res.body.contact_no");
     const fetchusers = new UsersModel({
       name: req.body.name,
       email: req.body.email,
@@ -249,8 +298,8 @@ export const getProfile = async (req, res) => {
       {
         $match: {
           _id: new mongoose.Types.ObjectId(userId),
-          isDeleted: false
-        }
+          isDeleted: false,
+        },
       },
       {
         $lookup: {
@@ -267,27 +316,27 @@ export const getProfile = async (req, res) => {
                         input: "$$cid",
                         to: "objectId",
                         onError: null,
-                        onNull: null
-                      }
-                    }
-                  ]
-                }
-              }
+                        onNull: null,
+                      },
+                    },
+                  ],
+                },
+              },
             },
             {
               $project: {
-                company_name: 1
-              }
-            }
+                company_name: 1,
+              },
+            },
           ],
-          as: "company"
-        }
+          as: "company",
+        },
       },
       {
         $unwind: {
           path: "$company",
-          preserveNullAndEmptyArrays: true
-        }
+          preserveNullAndEmptyArrays: true,
+        },
       },
       {
         $project: {
@@ -295,27 +344,25 @@ export const getProfile = async (req, res) => {
           email: 1,
           role: 1,
           status: 1,
-          preferences: 1, 
+          preferences: 1,
           createdAt: 1,
-          "company.company_name": 1
-        }
-      }
+          "company.company_name": 1,
+        },
+      },
     ];
     const result = await UsersModel.aggregate(pipeline);
-    console.log(result,"result");
-    
+
     res.status(200).json({
       status: "success",
       data: {
         user: result[0] || null,
-        msg: "Profile fetched successfully"
-      }
+        msg: "Profile fetched successfully",
+      },
     });
   } catch (err) {
     res.status(400).json({
       status: "fail",
-      msg: err.message
+      msg: err.message,
     });
   }
 };
-

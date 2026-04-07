@@ -222,10 +222,7 @@ export const markDefaultSprint = async (req, res) => {
   try {
     const userId = req.user.id;
     const sprintId = req.params.sprintId;
-      console.log(sprintId,"sprintId");
-    const Sprint = await SprintModel.findById(sprintId);
-    console.log(Sprint,"sprint");
-    
+    const Sprint = await SprintModel.findById(sprintId);    
     if (!Sprint) {
       return res.status(404).json({
         status: "failed",

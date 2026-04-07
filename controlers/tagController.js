@@ -13,7 +13,6 @@ export const getAllTags = async (req, res) => {
     }
     query.isDeleted = "false";
     query.projectId = loginUser?.preferences?.activeProject?.projectId ;
-    console.log(loginUser?.preferences?.activeProject, "projectId");
     const tags = await TagModel.find(query);
     res.status(200).json({
       status: 201,
@@ -52,11 +51,7 @@ export const createTag = async (req, res) => {
     const { loginUser } = req;
 
     const userId = loginUser?._id;
-    console.log(userId,"userId");
-    
     const projectId = loginUser?.preferences?.activeProject?.projectId;
-    console.log( loginUser?.preferences?.activeProject, "projectId");
-
     const { tagName } = req.body;
     if (!projectId) {
       return res.status(401).json({

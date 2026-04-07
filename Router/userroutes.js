@@ -2,7 +2,8 @@ import express from "express";
 
 const userRouter = express.Router();
 import {
-  getAllUsers,
+  getAllUsersWithLoginUser,
+  getAllUsersWithoutloginuser,
   deleteUsers,
   postUsers,
   updateUsers,
@@ -14,9 +15,9 @@ import {
   refreshtoken,
   logoutUser,
   logoutAllUser,
-  createPassword
+  createPassword,
 } from "../controlers/authcontroller.js";
-import { authenticate, authorized } from "../middleware/auth.js";
+import { authenticate, authorized , authorizedAllusers } from "../middleware/auth.js";
 userRouter.post("/register", UserRegister);
 userRouter.post("/login", userLogin);
 userRouter.post("/refresh", refreshtoken);
@@ -24,15 +25,16 @@ userRouter.post("/logout", logoutUser);
 userRouter.post("/logout-all", logoutAllUser);
 userRouter
   .route("/users")
-  .get(authenticate, authorized, getAllUsers)
+  .get(authenticate, authorized, getAllUsersWithoutloginuser)
   .post(authenticate, authorized, postUsers);
-  userRouter
+userRouter
+  .route("/getusers")
+  .get(authenticate, authorizedAllusers, getAllUsersWithLoginUser);
+userRouter
   .route("/users/:id")
   .delete(authenticate, authorized, deleteUsers)
   .patch(authenticate, authorized, updateUsers)
   .get(authenticate, authorized, getProfile);
-  userRouter
-  .route("/set_password/:token").patch(createPassword);
-
+userRouter.route("/set_password/:token").patch(createPassword);
 
 export default userRouter;

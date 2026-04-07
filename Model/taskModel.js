@@ -7,9 +7,6 @@ const TaskSchema = new mongoose.Schema(
       required: [true, "task name is a required field"],
       trim: true,
     },
-    taskid:{
-      type:Number
-    },
     companyId: {
      type: mongoose.Schema.Types.ObjectId,
       ref: "companies",
@@ -38,17 +35,12 @@ const TaskSchema = new mongoose.Schema(
       trim: true,
     },
     taskStatus: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "TaskStatus",
-      default: "new",
-    },
-    stage: {
       type: String,
-      default: "none",
+      default: "new",
     },
     type: {
       type: String,
-      enum: ["bug", "task", "user_story"],
+      enum: ["bug", "task", "story"],
       default: "task",
     },
     assignedTo: {

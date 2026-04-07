@@ -7,6 +7,7 @@ import ProjectRoutes from "./Router/projectRouters.js";
 import SprintRoutes from "./Router/sprintRouters.js";
 import TaskRoutes from "./Router/taskRoutes.js";
 import TagRoutes from "./Router/tagRoutes.js";
+import KAnbanColumnRoutes from "./Router/kanbanRoutes.js";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import color from "colors";
@@ -34,5 +35,6 @@ next();
  App.use("/auth/v1/sprint",SprintRoutes);
  App.use("/auth/v1/task",TaskRoutes);
  App.use("/auth/v1/tag",TagRoutes);
+ App.use("/auth/vi/kanbancolumn" ,KAnbanColumnRoutes);
 
 export  default App;

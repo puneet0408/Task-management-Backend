@@ -33,14 +33,12 @@ export const authenticate = (req, res, next) => {
   }
 };
 
-
 export const authorized = async (req, res, next) => {
   try {
-    
     if (!req.user) {
       return res.status(403).json({
         message: "Forbidden",
-        status: false
+        status: false,
       });
     }
 
@@ -48,7 +46,7 @@ export const authorized = async (req, res, next) => {
     if (!id) {
       return res.status(403).json({
         message: "Forbidden",
-        status: false
+        status: false,
       });
     }
     const user = await UsersModel.findById(id);
@@ -56,7 +54,7 @@ export const authorized = async (req, res, next) => {
     if (!user || !user.role) {
       return res.status(403).json({
         message: "Forbidden",
-        status: false
+        status: false,
       });
     }
     req.loginUser = user;
@@ -64,7 +62,7 @@ export const authorized = async (req, res, next) => {
       req.filterRole = ["admin"];
     }
     if (user.role === "admin") {
-      req.filterRole = ["employee", "manager"]; 
+      req.filterRole = ["employee", "manager"];
       req.companyId = user.company_name;
     }
 
@@ -72,6 +70,44 @@ export const authorized = async (req, res, next) => {
       req.filterRole = ["employee"];
       req.companyId = user.company_name;
     }
+    next();
+  } catch (error) {
+    return res.status(401).json({
+      data: {
+        msg: "unauthorized",
+      },
+    });
+  }
+};
+
+export const authorizedAllusers = async (req, res, next) => {
+  try {
+    if (!req.user) {
+      return res.status(403).json({
+        message: "Forbidden",
+        status: false,
+      });
+    }
+
+    const { id } = req.user;
+    if (!id) {
+      return res.status(403).json({
+        message: "Forbidden",
+        status: false,
+      });
+    }
+    const user = await UsersModel.findById(id);
+    if (!user || !user.role) {
+      return res.status(403).json({
+        message: "Forbidden",
+        status: false,
+      });
+    }
+    req.loginUser = user;
+    if (user.role === "superadmin") {
+      req.filterRole = ["admin"];
+    }
+    req.companyId = user.company_name;
     next();
   } catch (error) {
     return res.status(401).json({
