@@ -11,6 +11,7 @@ import KAnbanColumnRoutes from "./Router/kanbanRoutes.js";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import color from "colors";
+import AwsUploadRoutes from "./Router/awsmediaURL.js";
  let App = express();
 App.use(express.json());
 App.use(cookieParser());
@@ -36,5 +37,6 @@ next();
  App.use("/auth/v1/task",TaskRoutes);
  App.use("/auth/v1/tag",TagRoutes);
  App.use("/auth/vi/kanbancolumn" ,KAnbanColumnRoutes);
+ App.use("/auth/v1/mediauploader", AwsUploadRoutes);
 
 export  default App;

@@ -8,13 +8,13 @@ const TaskSchema = new mongoose.Schema(
       trim: true,
     },
     companyId: {
-     type: mongoose.Schema.Types.ObjectId,
+      type: mongoose.Schema.Types.ObjectId,
       ref: "companies",
       required: [true, "Company name is a required field"],
       trim: true,
     },
     sprintId: {
-    type: mongoose.Schema.Types.ObjectId,
+      type: mongoose.Schema.Types.ObjectId,
       ref: "sprints",
       required: [true, "Sprint name is a required field"],
       trim: true,
@@ -26,7 +26,7 @@ const TaskSchema = new mongoose.Schema(
       trim: true,
     },
     parentId: {
-       type: mongoose.Schema.Types.ObjectId,
+      type: mongoose.Schema.Types.ObjectId,
       ref: "tasks",
       trim: true,
     },
@@ -45,24 +45,30 @@ const TaskSchema = new mongoose.Schema(
     },
     assignedTo: {
       type: mongoose.Schema.Types.ObjectId,
-        ref: "users", 
-  default: null,  
+      ref: "users",
+      default: null,
     },
-tags: [
-  {
-    label: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-    value: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-  },
-],
-
+    tags: [
+      {
+        label: {
+          type: String,
+          required: true,
+          trim: true,
+        },
+        value: {
+          type: String,
+          required: true,
+          trim: true,
+        },
+      },
+    ],
+    attachment: [
+      {
+        name: { type: String, trim: true },
+        type: { type: String, trim: true },
+        url:  { type: String, trim: true },
+      },
+    ],
     originalTIme: {
       type: Number,
     },
@@ -84,7 +90,7 @@ tags: [
       type: Date,
     },
   },
-  { timestamps: true },
+  { timestamps: true }
 );
 
 export const TaskModel = mongoose.model("tasks", TaskSchema);

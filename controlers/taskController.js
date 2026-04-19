@@ -16,8 +16,6 @@ export const getAllTask = async (req, res) => {
       sortFIeld,
       sortDirection,
     } = req.query;
-    console.log(assignedTo, "assignedTo");
-
     let taskFilters = { isDeleted: false };
     if (sprintId) {
       taskFilters.sprintId = new mongoose.Types.ObjectId(sprintId);
@@ -94,6 +92,7 @@ export const getAllTask = async (req, res) => {
           parentId: 1,
           description: 1,
           taskStatus: 1,
+          attachment:1,
           type: 1,
           assignedTo: 1,
           tags: 1,
@@ -152,6 +151,7 @@ export const createTask = async (req, res) => {
       CompleteTIme,
       priority,
       completedAt,
+      attachment,
     } = req.body;
     if (!companyId) {
       return res.status(400).json({
@@ -177,6 +177,7 @@ export const createTask = async (req, res) => {
       taskStatus,
       stage,
       type,
+      attachment,
       assignedTo: assignedTo?.value,
       tags,
       originalTIme,
