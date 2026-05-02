@@ -1,7 +1,7 @@
 import dotenv from "dotenv";
 dotenv.config({ path: "./config.env" });
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { PutObjectCommand, S3Client  , GetObjectCommand} from "@aws-sdk/client-s3";
 
 const client = new S3Client({
   region: process.env.AWS_REGION || "eu-north-1",
@@ -9,8 +9,8 @@ const client = new S3Client({
     accessKeyId: String(process.env.AWS_ACCESS_KEY_ID).trim(),
     secretAccessKey: String(process.env.AWS_SECRET_ACCESS_KEY).trim(),
   },
-  requestChecksumCalculation: "WHEN_REQUIRED",  // ✅ KEY FIX
-  responseChecksumValidation: "WHEN_REQUIRED",  // ✅ KEY FIX
+  requestChecksumCalculation: "WHEN_REQUIRED",
+  responseChecksumValidation: "WHEN_REQUIRED",
 });
 
 export const createPresignedUrlWithClient = async (req, res) => {
@@ -48,5 +48,20 @@ export const createPresignedUrlWithClient = async (req, res) => {
       message: "Error generating presigned URL",
       error: error.message,
     });
+  }
+};
+
+export const getPresignedViewUrl = async (req, res) => {
+  try {
+    const { key } = req.query;
+    const command = new GetObjectCommand({
+      Bucket: process.env.AWS_BUCKET_NAME,
+      Key: key,
+    });
+    const url = await getSignedUrl(client, command, { expiresIn: 3600 });
+    return res.status(200).json({ success: true, url });
+  } catch (error) {
+    console.error("S3 Get Error:", error);
+    return res.status(500).json({ success: false, message: "Error generating view URL" });
   }
 };

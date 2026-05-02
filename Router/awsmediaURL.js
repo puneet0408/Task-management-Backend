@@ -1,5 +1,5 @@
 import express from "express";
-import { createPresignedUrlWithClient } from "../controlers/awsmediaupload.js";
+import { createPresignedUrlWithClient,getPresignedViewUrl } from "../controlers/awsmediaupload.js";
 import { authenticate, authorized } from "../middleware/auth.js";
 
 const AwsUploadRoutes = express.Router();
@@ -10,5 +10,7 @@ AwsUploadRoutes.post(
   authorized,
   createPresignedUrlWithClient
 );
+AwsUploadRoutes.route("/:id")
+  .get(authenticate, authorized,getPresignedViewUrl)
 
 export default AwsUploadRoutes;

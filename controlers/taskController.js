@@ -105,6 +105,9 @@ export const getAllTask = async (req, res) => {
           "user._id": 1,
           createdBy: 1,
           updatedAt: 1,
+          subtasks:1,
+          comments:1,
+          due_date:1,
         },
       },
       ...(limit ? [{ $limit: Number(limit) }] : []),
@@ -152,6 +155,9 @@ export const createTask = async (req, res) => {
       priority,
       completedAt,
       attachment,
+      subtasks,
+      comments,
+      due_date,
     } = req.body;
     if (!companyId) {
       return res.status(400).json({
@@ -178,6 +184,7 @@ export const createTask = async (req, res) => {
       stage,
       type,
       attachment,
+      subtasks,
       assignedTo: assignedTo?.value,
       tags,
       originalTIme,
@@ -186,6 +193,8 @@ export const createTask = async (req, res) => {
       priority,
       completedAt,
       createdBy,
+      comments,
+      due_date
     };
     const task = await TaskModel.create(payload);
     res.status(201).json({
