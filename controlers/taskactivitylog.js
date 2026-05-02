@@ -4,7 +4,6 @@ import mongoose from "mongoose";
 export const getAllActivity = async (req, res) => {
   try {
     const { taskId, limit, offset } = req.query;
-console.log(taskId,"taskId");
 
     if (!taskId) {
       return res.status(400).json({
@@ -20,7 +19,6 @@ console.log(taskId,"taskId");
       .sort({ createdAt: -1 })
       .limit(limit)
       .skip(offset || 0);
-console.log(data,"task activity");
 
     res.status(200).json({
       status: "success",
@@ -65,7 +63,6 @@ export const createActivity = async (req, res) => {
 
     const userId = loginUser?._id;
     const projectId = loginUser?.preferences?.activeProject?.projectId;
-console.log(req.body,"wrwre");
 
     const { taskId, action, changes, message } = req.body;
 
