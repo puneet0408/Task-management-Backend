@@ -9,6 +9,7 @@ import TaskRoutes from "./Router/taskRoutes.js";
 import TagRoutes from "./Router/tagRoutes.js";
 import KAnbanColumnRoutes from "./Router/kanbanRoutes.js";
 import TaskActivityRoutes from "./Router/taskActivityRoutes.js";
+import dashboardRoutes from "./Router/dashboardwidget.js";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import color from "colors";
@@ -39,7 +40,8 @@ next();
  App.use("/auth/v1/tag",TagRoutes);
  App.use("/auth/vi/kanbancolumn" ,KAnbanColumnRoutes);
  App.use("/auth/v1/mediauploader", AwsUploadRoutes);
- App.use("/auth/v1/taskActivity",TaskActivityRoutes)
+ App.use("/auth/v1/taskActivity",TaskActivityRoutes);
+ App.use("/auth/vi/dashboard",dashboardRoutes);
  
 
 export  default App;
