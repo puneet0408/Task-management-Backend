@@ -293,7 +293,23 @@ export const deleteUsers = async (req, res) => {
 export const getProfile = async (req, res) => {
   try {
     const userId = req.params.id;
+    const existingUser = await UsersModel.findById(userId);
 
+    if (!existingUser) {
+      return res.status(404).json({
+        status: "fail",
+        msg: "User not found",
+      });
+    }
+    if (existingUser.role === "superadmin") {
+      return res.status(200).json({
+        status: "success",
+        data: {
+          user: existingUser,
+          msg: "Profile fetched successfully",
+        },
+      });
+    }
     const pipeline = [
       {
         $match: {

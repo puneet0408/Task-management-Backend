@@ -70,6 +70,9 @@ export const authorized = async (req, res, next) => {
       req.filterRole = ["employee"];
       req.companyId = user.company_name;
     }
+      if (user.role === "employee") {
+      req.companyId = user.company_name;
+    }
     next();
   } catch (error) {
     return res.status(401).json({

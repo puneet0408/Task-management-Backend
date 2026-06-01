@@ -1,10 +1,13 @@
 import { TaskModel } from "../Model/taskModel.js";
+import { ProjectModel } from "../Model/projectModel.js";
+import { SprintModel } from "../Model/sprintModel.js";
+import { UsersModel } from "../Model/userModel.js";
 import mongoose from "mongoose";
+import { LocationInfo$ } from "@aws-sdk/client-s3";
 
-export const getSummaryWidgets = async (req, res) => {
+export const getprojectSummaryWidgets = async (req, res) => {
   try {
     const { loginUser } = req;
-
     if (!loginUser) {
       return res.status(401).json({
         status: "fail",
@@ -13,7 +16,7 @@ export const getSummaryWidgets = async (req, res) => {
     }
 
     const { sprintId } = req.query;
-     const projectId = loginUser?.preferences?.activeProject?.projectId;
+    const projectId = loginUser?.preferences?.activeProject?.projectId;
 
     let matchStage = {
       isDeleted: false,
@@ -22,7 +25,7 @@ export const getSummaryWidgets = async (req, res) => {
     if (sprintId) {
       matchStage.sprintId = new mongoose.Types.ObjectId(sprintId);
     }
-      if (projectId) {
+    if (projectId) {
       matchStage.projectId = new mongoose.Types.ObjectId(projectId);
     }
     // const pipeline = [
@@ -309,7 +312,6 @@ export const getSummaryWidgets = async (req, res) => {
       },
     ];
     const result = await TaskModel.aggregate(pipeline);
-    console.log(result, "resultresult");
 
     const summary = result[0] || {
       totalTasks: 0,
@@ -321,6 +323,480 @@ export const getSummaryWidgets = async (req, res) => {
     return res.status(200).json({
       status: "success",
       data: summary,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      status: "fail",
+      msg: error.message,
+    });
+  }
+};
+
+export const getAdminSummaryWidgets = async (req, res) => {
+  try {
+    const { loginUser } = req;
+
+    if (!loginUser) {
+      return res.status(401).json({
+        status: "fail",
+        msg: "Unauthorized",
+      });
+    }
+
+    const companyId = loginUser?.company_name;
+
+    const taskFilter = {
+      isDeleted: false,
+      companyId: new mongoose.Types.ObjectId(companyId),
+    };
+
+    const userFilter = {
+      isDeleted: false,
+      company_name: companyId,
+    };
+    const projectFilter = {
+      isDeleted: false,
+      companyId: companyId,
+    };
+    const sprintFilter = {
+      isDeleted: false,
+      companyId: companyId,
+    };
+
+    const taskPipeline = [
+      {
+        $match: taskFilter,
+      },
+      {
+        $facet: {
+          taskCount: [
+            {
+              $group: {
+                _id: null,
+                total: { $sum: 1 },
+              },
+            },
+          ],
+          permemberassign: [
+            {
+              $group: {
+                _id: "$assignedTo",
+                total: { $sum: 1 },
+              },
+            },
+            { $match: { _id: { $ne: null } } },
+            {
+              $lookup: {
+                from: "users",
+                localField: "_id",
+                foreignField: "_id",
+                as: "user",
+              },
+            },
+            {
+              $unwind: {
+                path: "$user",
+                preserveNullAndEmptyArrays: true,
+              },
+            },
+            {
+              $project: {
+                _id: 1,
+                total: 1,
+                name: "$user.name",
+                userId: "$_id",
+              },
+            },
+            { $limit: 5 },
+          ],
+          createdBymenber: [
+            {
+              $group: {
+                _id: "$createdBy",
+                total: { $sum: 1 },
+              },
+            },
+            { $match: { _id: { $ne: null } } },
+            {
+              $lookup: {
+                from: "users",
+                let: { userId: "$_id" },
+
+                pipeline: [
+                  {
+                    $match: {
+                      $expr: {
+                        $eq: [
+                          "$_id",
+                          {
+                            $convert: {
+                              input: "$$userId",
+                              to: "objectId",
+                              onError: null,
+                              onNull: null,
+                            },
+                          },
+                        ],
+                      },
+                    },
+                  },
+
+                  {
+                    $project: {
+                      name: 1,
+                      email: 1,
+                    },
+                  },
+                ],
+
+                as: "user",
+              },
+            },
+
+            {
+              $unwind: {
+                path: "$user",
+                preserveNullAndEmptyArrays: true,
+              },
+            },
+
+            {
+              $project: {
+                _id: 0,
+                userId: "$_id",
+                total: 1,
+                name: "$user.name",
+              },
+            },
+            { $limit: 5 },
+          ],
+          Taskbypriority: [
+            {
+              $group: {
+                _id: "$priority",
+                total: { $sum: 1 },
+              },
+            },
+          ],
+          critialTask: [
+            {
+              $match: {
+                priority: { $eq: "1" },
+              },
+            },
+            {
+              $project: {
+                title: 1,
+                taskStatus: 1,
+                due_date: 1,
+              },
+            },
+            { $limit: 5 },
+          ],
+          OverdueTask: [
+            {
+              $match: {
+                due_date: { $lt: new Date() },
+                taskStatus: { $nin: ["done", "closed"] },
+              },
+            },
+            {
+              $project: {
+                title: 1,
+                due_date: 1,
+                _id: 1,
+              },
+            },
+            { $limit: 5 },
+          ],
+          noduedate: [
+            {
+              $match: {
+                due_date: null,
+              },
+            },
+            {
+              $count: "total",
+            },
+          ],
+          critialTaskCount: [
+            {
+              $match: {
+                priority: { $eq: "1" },
+              },
+            },
+            {
+              $count: "total",
+            },
+          ],
+          OverdueTaskcount: [
+            {
+              $match: {
+                due_date: { $lt: new Date() },
+                taskStatus: { $nin: ["done", "closed"] },
+              },
+            },
+            {
+              $count: "total",
+            },
+          ],
+          unassigned: [
+            {
+              $match: {
+                assignedTo: null,
+              },
+            },
+            {
+              $count: "total",
+            },
+          ],
+          totalSubtasks: [
+            {
+              $project: {
+                count: {
+                  $size: "$subtasks",
+                },
+              },
+            },
+            {
+              $group: {
+                _id: null,
+                total: { $sum: "$count" },
+              },
+            },
+          ],
+          noSubtaskCount: [
+            {
+              $match: {
+                subtasks: { $size: 0 },
+              },
+            },
+
+            {
+              $count: "total",
+            },
+          ],
+          completedSubtaskCount: [
+            {
+              $match: {
+                subtasks: {
+                  $elemMatch: {
+                    completed: true,
+                  },
+                },
+              },
+            },
+
+            {
+              $count: "total",
+            },
+          ],
+          pendingSubtaskCount: [
+            {
+              $match: {
+                subtasks: {
+                  $elemMatch: {
+                    completed: false,
+                  },
+                },
+              },
+            },
+
+            {
+              $count: "total",
+            },
+          ],
+          totalComments: [
+            {
+              $project: {
+                count: {
+                  $size: "$comments",
+                },
+              },
+            },
+            {
+              $group: {
+                _id: null,
+                total: { $sum: "$count" },
+              },
+            },
+          ],
+          noCommentCount: [
+            {
+              $match: {
+                comments: { $size: 0 },
+              },
+            },
+
+            {
+              $count: "total",
+            },
+          ],
+          mostCommentedTask: [
+            {
+              $project: {
+                title: 1,
+                taskStatus: 1,
+
+                commentCount: {
+                  $size: "$comments",
+                },
+              },
+            },
+
+            {
+              $match: {
+                commentCount: {
+                  $gt: 0,
+                },
+              },
+            },
+
+            {
+              $sort: {
+                commentCount: -1,
+              },
+            },
+
+            {
+              $limit: 1,
+            },
+          ],
+          taskContainFile: [
+            {
+              $match: {
+                "attachment.0": {
+                  $exists: true,
+                },
+              },
+            },
+
+            {
+              $count: "total",
+            },
+          ],
+          taskContainoFile: [
+            {
+              $match: {
+                attachment: { $size: 0 },
+              },
+            },
+            {
+              $count: "total",
+            },
+          ],
+          totalattachment: [
+            {
+              $project: {
+                count: {
+                  $size: "$attachment",
+                },
+              },
+            },
+            {
+              $group: {
+                _id: null,
+                total: { $sum: "$count" },
+              },
+            },
+          ],
+        },
+      },
+    ];
+    const userPipeline = [
+      {
+        $match: userFilter,
+      },
+      {
+        $facet: {
+          userCount: [
+            {
+              $group: {
+                _id: null,
+                total: { $sum: 1 },
+              },
+            },
+          ],
+        },
+      },
+    ];
+    const projectPipeline = [
+      {
+        $match: projectFilter,
+      },
+      {
+        $facet: {
+          projectCount: [
+            {
+              $group: {
+                _id: null,
+                total: { $sum: 1 },
+              },
+            },
+          ],
+        },
+      },
+    ];
+    const sprintPipeline = [
+      {
+        $match: sprintFilter,
+      },
+      {
+        $facet: {
+          SprintCount: [
+            {
+              $group: {
+                _id: null,
+                total: { $sum: 1 },
+              },
+            },
+          ],
+        },
+      },
+    ];
+    const [taskResult, userResult, projectResult, sprintResult] =
+      await Promise.all([
+        TaskModel.aggregate(taskPipeline),
+        UsersModel.aggregate(userPipeline),
+        ProjectModel.aggregate(projectPipeline),
+        SprintModel.aggregate(sprintPipeline),
+      ]);
+    const taskData = taskResult[0];
+    console.log(taskData, "taskData");
+
+    return res.status(200).json({
+      status: "success",
+      data: {
+        totalTasks: taskData.taskCount[0]?.total ?? 0,
+        totalUsers: userResult[0].userCount[0]?.total ?? 0,
+        totalProjects: projectResult[0].projectCount[0]?.total ?? 0,
+        totalSprints: sprintResult[0].SprintCount[0]?.total ?? 0,
+        memberWorkload: taskData.permemberassign,
+        createdBy: taskData.createdBymenber,
+        byPriority: taskData.Taskbypriority,
+        criticalTasks: taskData.critialTask,
+        overdueTasks: taskData.OverdueTask,
+        noduedatecount: taskData.noduedate[0]?.total ?? 0,
+        unassignedCount: taskData.unassigned[0]?.total ?? 0,
+        critialTaskCount: taskData.critialTaskCount[0]?.total ?? 0,
+        OverdueTaskcount: taskData.OverdueTaskcount[0]?.total ?? 0,
+        subtasksummary: {
+          totalSubtasks: taskData.totalSubtasks[0]?.total ?? 0,
+          noSubtaskCount: taskData.noSubtaskCount[0]?.total ?? 0,
+          completedSubtaskCount: taskData.completedSubtaskCount[0]?.total ?? 0,
+          pendingSubtaskCount: taskData.pendingSubtaskCount[0]?.total ?? 0,
+        },
+        attachment: {
+          totalattachment: taskData.totalattachment[0]?.total ?? 0,
+          taskContainFile: taskData.taskContainFile[0]?.total ?? 0,
+          taskContainoFile: taskData.taskContainoFile[0]?.total ?? 0,
+        },
+        commentSummary: {
+          totalComments: taskData.totalComments[0]?.total ?? 0,
+          noCommentCount: taskData.noCommentCount[0]?.total ?? 0,
+          mostCommentedTask: taskData.mostCommentedTask[0] ?? "",
+        },
+      },
     });
   } catch (error) {
     return res.status(500).json({
