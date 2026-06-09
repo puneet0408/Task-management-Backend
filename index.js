@@ -10,6 +10,7 @@ import TagRoutes from "./Router/tagRoutes.js";
 import KAnbanColumnRoutes from "./Router/kanbanRoutes.js";
 import TaskActivityRoutes from "./Router/taskActivityRoutes.js";
 import dashboardRoutes from "./Router/dashboardwidget.js";
+import NotificationRoutes from "./Router/notificationRoutes.js";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import color from "colors";
@@ -42,6 +43,7 @@ next();
  App.use("/auth/v1/mediauploader", AwsUploadRoutes);
  App.use("/auth/v1/taskActivity",TaskActivityRoutes);
  App.use("/auth/vi/dashboard",dashboardRoutes);
+ App.use("/auth/vi/notification",NotificationRoutes)
  
 
 export  default App;

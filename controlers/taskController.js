@@ -1,6 +1,7 @@
 import { TaskModel } from "../Model/taskModel.js";
+import { NotificationModel } from "../Model/notification.js";
 import mongoose from "mongoose";
-
+import { getIO } from "../socket/socket.js";
 export const getAllTask = async (req, res) => {
   try {
     const {
@@ -92,7 +93,7 @@ export const getAllTask = async (req, res) => {
           parentId: 1,
           description: 1,
           taskStatus: 1,
-          attachment:1,
+          attachment: 1,
           type: 1,
           assignedTo: 1,
           tags: 1,
@@ -105,9 +106,9 @@ export const getAllTask = async (req, res) => {
           "user._id": 1,
           createdBy: 1,
           updatedAt: 1,
-          subtasks:1,
-          comments:1,
-          due_date:1,
+          subtasks: 1,
+          comments: 1,
+          due_date: 1,
         },
       },
       ...(limit ? [{ $limit: Number(limit) }] : []),
@@ -185,7 +186,7 @@ export const createTask = async (req, res) => {
       type,
       attachment,
       subtasks,
-      assignedTo: assignedTo?.value,
+      assignedTo: assignedTo,
       tags,
       originalTIme,
       RemainingTIme,
@@ -194,9 +195,28 @@ export const createTask = async (req, res) => {
       completedAt,
       createdBy,
       comments,
-      due_date
+      due_date,
     };
     const task = await TaskModel.create(payload);
+    console.log("Task Created");
+    console.log(task);
+    if (task.assignedTo) {
+      console.log("Creating Notification");
+
+      const notification = await NotificationModel.create({
+        userId: task.assignedTo,
+        title: "Task Assigned",
+        message: `You were assigned task ${task.title}`,
+        type: "TASK_ASSIGNED",
+      });
+
+      console.log(notification);
+
+      const io = getIO();
+
+     io.to(task.assignedTo.toString())
+  .emit("newNotification", notification);
+    }
     res.status(201).json({
       task,
       status: 201,
