@@ -76,6 +76,16 @@ const UserSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    permission: {
+      type: String,
+      default: "allowAction",
+    },
+     profilepic: {
+        name: { type: String, trim: true },
+        type: { type: String, trim: true },
+        url: { type: String, trim: true },
+      },
+    
   },
   { timestamps: true },
 );

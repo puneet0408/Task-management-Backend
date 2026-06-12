@@ -44,9 +44,7 @@ export const createNotification = async (req, res) => {
         message,
         isRead,
       });
-
     const io = getIO();
-
     io.to(userId.toString()).emit(
       "notification",
       {
@@ -57,7 +55,6 @@ export const createNotification = async (req, res) => {
         createdAt: notification.createdAt,
       }
     );
-
     res.status(200).json({
       status: "Success",
       data: {
@@ -65,7 +62,6 @@ export const createNotification = async (req, res) => {
         msg: "Notification Created Successfully",
       },
     });
-
   } catch (err) {
     res.status(400).json({
       status: "Fail",

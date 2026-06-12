@@ -38,6 +38,8 @@ export const getAllUsersWithLoginUser = async (req, res) => {
           project_name: 1,
           createdAt: 1,
           updatedAt: 1,
+          permission:1,
+          profilepic:1,
         },
       },
     ];
@@ -148,6 +150,8 @@ export const getAllUsersWithoutloginuser = async (req, res) => {
           country: 1,
           address: 1,
           "company.company_name": 1,
+          permission:1,
+          profilepic:1,
         },
       },
 
@@ -254,9 +258,8 @@ export const updateUsers = async (req, res) => {
     res.status(200).json({
       status: 201,
       data: {
-        updateUsers,
         status: 201,
-        msg: "data get poperly",
+        msg: "data Udapted Properly",
       },
     });
   } catch (err) {
