@@ -16,10 +16,50 @@ export const getAllTask = async (req, res) => {
       searchValue,
       sortFIeld,
       sortDirection,
+      filter,
     } = req.query;
+
+    const { loginUser } = req;
+    if (!loginUser) {
+      return res.status(401).json({
+        data: {
+          msg: "unothorized",
+        },
+      });
+    }
+    const projectId = loginUser?.preferences?.activeProject?.projectId;
     let taskFilters = { isDeleted: false };
     if (sprintId) {
       taskFilters.sprintId = new mongoose.Types.ObjectId(sprintId);
+    }
+    if (projectId) {
+      taskFilters.projectId = new mongoose.Types.ObjectId(projectId);
+    }
+    if (filter === "unassignedTasks") {
+      taskFilters.assignedTo = null;
+    }
+    if (filter === "todo") {
+      taskFilters.taskStatus = "New";
+    }
+    if (filter === "openbug") {
+      taskFilters.type = "bug";
+      taskFilters.taskStatus = {
+        $in: ["in_progress", "New"],
+      };
+    }
+    if (filter === "closedbug") {
+      taskFilters.type = "bug";
+      taskFilters.taskStatus = {
+        $nin: ["done", "closed"],
+      };
+    }
+    if (filter === "overdue") {
+      taskFilters.due_date = {
+        $lt: new Date(),
+      };
+      taskFilters.taskStatus = {
+        $nin: ["done", "closed"],
+      };
     }
     if (assignedTo) {
       const assignedArray = Array.isArray(assignedTo)
@@ -52,9 +92,12 @@ export const getAllTask = async (req, res) => {
       const typeArray = Array.isArray(type) ? type : type.split(",");
       taskFilters.type = { $in: typeArray };
     }
-    const matchStage = {
-      $or: [{ type: "story", isDeleted: false }, taskFilters],
-    };
+    let matchStage = taskFilters;
+    if (!filter) {
+      matchStage = {
+        $or: [{ type: "story", isDeleted: false }, taskFilters],
+      };
+    }
     if (searchValue) {
       matchStage.$and = [
         {
@@ -214,8 +257,7 @@ export const createTask = async (req, res) => {
 
       const io = getIO();
 
-     io.to(task.assignedTo.toString())
-  .emit("newNotification", notification);
+      io.to(task.assignedTo.toString()).emit("newNotification", notification);
     }
     res.status(201).json({
       task,

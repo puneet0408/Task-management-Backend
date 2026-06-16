@@ -151,6 +151,7 @@ export const getprojectSummaryWidgets = async (req, res) => {
                     $cond: [
                       {
                         $and: [
+                          { $ifNull: ["$due_date", false] },
                           { $lt: ["$due_date", new Date()] },
                           { $ne: ["$taskStatus", "done"] },
                           { $ne: ["$taskStatus", "closed"] },
