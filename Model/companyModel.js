@@ -43,7 +43,7 @@ const companySchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["active", "suspended"],
+      enum: ["active", "inactive"],
       default: "active",
     },
     isDeleted: {

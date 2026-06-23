@@ -38,8 +38,8 @@ export const getAllUsersWithLoginUser = async (req, res) => {
           project_name: 1,
           createdAt: 1,
           updatedAt: 1,
-          permission:1,
-          profilepic:1,
+          permission: 1,
+          profilepic: 1,
         },
       },
     ];
@@ -150,8 +150,8 @@ export const getAllUsersWithoutloginuser = async (req, res) => {
           country: 1,
           address: 1,
           "company.company_name": 1,
-          permission:1,
-          profilepic:1,
+          permission: 1,
+          profilepic: 1,
         },
       },
 
@@ -188,11 +188,36 @@ export const postUsers = async (req, res) => {
     } else {
       company_name = companyId;
     }
-    const Companydtails = CompanyModel.findById(company_name);
+
+    const Companydtails = await CompanyModel.findById(company_name);
     if (!Companydtails) {
       return res.status(401).json({
         data: {
           msg: "Company not found",
+        },
+      });
+    }
+    const userCount = await UsersModel.countDocuments({
+      company_name: companyId,
+    });
+
+    const existingUser = await UsersModel.findOne({
+      name: req.body.name,
+      email: req.body.email,
+    });
+
+    if (existingUser) {
+      return res.status(401).json({
+        data: {
+          msg: "User already exists with same name and email",
+        },
+      });
+    }
+    if (userCount >= Number(Companydtails?.limit?.maxUsers || 0)) {
+      return res.status(401).json({
+        data: {
+          msg: `User limit exceeded. Maximum ${Companydtails?.limit?.maxUsers} users allowed.`,
+          action: "showpaymentgateway",
         },
       });
     }

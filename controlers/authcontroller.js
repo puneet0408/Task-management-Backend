@@ -1,5 +1,6 @@
 import { UsersModel } from "../Model/userModel.js";
 import { gethashedPassword, comparePssword } from "../utils/hash.js";
+import { CompanyModel } from "../Model/companyModel.js";
 import {
   getAccessToken,
   getCookiesPayload,
@@ -89,6 +90,32 @@ export const userLogin = async (req, res) => {
         },
       });
     }
+    let companyid = user?.company_name;
+    const Companycheck = await CompanyModel.findById(companyid);
+    if (user?.role != "superadmin") {
+      if (!Companycheck) {
+        return res.status(404).json({
+          data: {
+            msg: "Company not found",
+          },
+        });
+      }
+    }
+
+    if (user?.status === "inactive") {
+      return res.status(404).json({
+        data: {
+          msg: "Account Suspanded please connect to admin",
+        },
+      });
+    }
+    if (Companycheck?.status === "inactive") {
+      return res.status(404).json({
+        data: {
+          msg: "Company Suspanded please connect to admin",
+        },
+      });
+    }
     const isPasswordMatched = await comparePssword(password, user?.password);
     if (!isPasswordMatched) {
       return res.status(401).json({
@@ -112,14 +139,12 @@ export const userLogin = async (req, res) => {
           expiresAt,
         },
       },
-      $set:{
-        "preferences.activeProject.projectId": user?.preferences?.defaultProjectId,
-        "preferences.lastProjectId": user?.preferences?.defaultProjectId
-      }
+      $set: {
+        "preferences.activeProject.projectId":
+          user?.preferences?.defaultProjectId,
+        "preferences.lastProjectId": user?.preferences?.defaultProjectId,
+      },
     });
-    
-    
-
     res.cookie("refreshtoken", refreshToken, createCookies);
     res.cookie("accessToken", accessToken, createCookies);
     res.status(201).json({

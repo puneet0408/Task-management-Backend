@@ -95,7 +95,14 @@ export const getAllTask = async (req, res) => {
     let matchStage = taskFilters;
     if (!filter) {
       matchStage = {
-        $or: [{ type: "story", isDeleted: false }, taskFilters],
+        $or: [
+          {
+            type: "story",
+            isDeleted: false,
+            projectId: new mongoose.Types.ObjectId(projectId),
+          },
+          taskFilters,
+        ],
       };
     }
     if (searchValue) {
