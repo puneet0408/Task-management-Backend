@@ -7,6 +7,10 @@ const projectSchema = new mongoose.Schema(
       required: [true, "Project name is a required field"],
       trim: true,
     },
+    taskCounter:{
+      type:Number,
+      default:0,
+    },
     companyId: {
       type: String,
       required: [true, "Company name is a required field"],

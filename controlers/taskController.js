@@ -2,6 +2,7 @@ import { TaskModel } from "../Model/taskModel.js";
 import { NotificationModel } from "../Model/notification.js";
 import mongoose from "mongoose";
 import { getIO } from "../socket/socket.js";
+import { ProjectModel } from "../Model/projectModel.js";
 export const getAllTask = async (req, res) => {
   try {
     const {
@@ -159,6 +160,7 @@ export const getAllTask = async (req, res) => {
           subtasks: 1,
           comments: 1,
           due_date: 1,
+          taskId:1,
         },
       },
       ...(limit ? [{ $limit: Number(limit) }] : []),
@@ -224,7 +226,16 @@ export const createTask = async (req, res) => {
         },
       });
     }
+    const projectDetails = await ProjectModel.findById(projectId);
+    console.log(projectDetails, "projectDetails");
+
+    let updatetaskCounterinproject = {
+      ...projectDetails,
+      taskCounter: projectDetails?.taskCounter + 1,
+    };
+    console.log(updatetaskCounterinproject, "updatetaskCounterinproject");
     const payload = {
+      taskId: updatetaskCounterinproject?.taskCounter,
       title,
       companyId,
       projectId,

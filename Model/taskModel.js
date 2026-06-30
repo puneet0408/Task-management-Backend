@@ -7,6 +7,10 @@ const TaskSchema = new mongoose.Schema(
       required: [true, "task name is a required field"],
       trim: true,
     },
+    taskId:{
+      type:Number,
+       required: [true, "task Id is required"],
+    },
     companyId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "companies",

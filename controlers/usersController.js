@@ -150,6 +150,8 @@ export const getAllUsersWithoutloginuser = async (req, res) => {
           country: 1,
           address: 1,
           "company.company_name": 1,
+             createdAt: 1,
+          updatedAt: 1,
           permission: 1,
           profilepic: 1,
         },
@@ -390,7 +392,7 @@ export const getProfile = async (req, res) => {
           status: 1,
           preferences: 1,
           createdAt: 1,
-          "company.company_name": 1,
+          "company.company_name": 1, 
         },
       },
     ];

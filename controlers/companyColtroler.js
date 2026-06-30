@@ -11,17 +11,24 @@ export const getAllCompanies = async (req, res) => {
       limit = 10,
       offset = 0,
     } = req.query;
-    let query = {};
+    let query = {isDeleted:false};
     if (dateFrom && dateTo) {
       query.createdAt = {
         $gte: new Date(dateFrom),
         $lte: new Date(dateTo + "T23:59:59.999Z"),
       };
     }
-       query.isDeleted = false;
-    if (searchValue) {
-      query.$text = { $search: searchValue };
-    }
+if (searchValue) {
+  query.$or = [
+    { company_name: { $regex: searchValue, $options: "i" } },
+    { owner_name: { $regex: searchValue, $options: "i" } },
+    { email: { $regex: searchValue, $options: "i" } },
+    { contact_no: { $regex: searchValue, $options: "i" } },
+    { city: { $regex: searchValue, $options: "i" } },
+    { state: { $regex: searchValue, $options: "i" } },
+    { country: { $regex: searchValue, $options: "i" } },
+  ];
+}
     let mongoQuery = CompanyModel.find(query);
     if (sortFIeld) {
       mongoQuery = mongoQuery.sort({

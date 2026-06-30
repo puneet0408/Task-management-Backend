@@ -3,8 +3,8 @@ import { UsersModel } from "../Model/userModel.js";
 
 export const getAllSprint = async (req, res) => {
   try {
-    let query={};
-        const {
+    let query = {};
+    const {
       dateFrom,
       dateTo,
       searchValue,
@@ -22,7 +22,7 @@ export const getAllSprint = async (req, res) => {
         },
       });
     }
-     if (req.loginUser?.preferences?.activeProject?.projectId) {
+    if (req.loginUser?.preferences?.activeProject?.projectId) {
       query.projectId = req.loginUser?.preferences?.activeProject?.projectId;
     } else {
       return res.status(401).json({
@@ -31,26 +31,29 @@ export const getAllSprint = async (req, res) => {
         },
       });
     }
-        if (dateFrom && dateTo) {
-          query.createdAt = {
-            $gte: new Date(dateFrom),
-            $lte: new Date(dateTo + "T23:59:59.999Z"),
-          };
-        }
-        query.isDeleted = false;
-        if (searchValue) {
-          query.$text = { $search: searchValue };
-        }
-        let mongoQuery = SprintModel.find(query);
-        if (sortFIeld) {
-          mongoQuery = mongoQuery.sort({
-            [sortFIeld]: sortDirection === "asc" ? 1 : -1,
-          });
-        }
-        const fetchSprint = await mongoQuery
-          .skip(Number(offset)) 
-          .limit(Number(limit));
-        const totalCount = await SprintModel.countDocuments(query);
+    if (dateFrom && dateTo) {
+      query.createdAt = {
+        $gte: new Date(dateFrom),
+        $lte: new Date(dateTo + "T23:59:59.999Z"),
+      };
+    }
+    query.isDeleted = false;
+    if (searchValue) {
+      query.sprintName = {
+        $regex: searchValue,
+        $options: "i",
+      };
+    }
+    let mongoQuery = SprintModel.find(query);
+    if (sortFIeld) {
+      mongoQuery = mongoQuery.sort({
+        [sortFIeld]: sortDirection === "asc" ? 1 : -1,
+      });
+    }
+    const fetchSprint = await mongoQuery
+      .skip(Number(offset))
+      .limit(Number(limit));
+    const totalCount = await SprintModel.countDocuments(query);
     res.status(200).json({
       status: 200,
       data: {
@@ -113,7 +116,7 @@ export const UpdateSprint = async (req, res) => {
     const id = req.params.id;
     const fetchSprint = await SprintModel.findByIdAndUpdate(id, req.body);
     res.status(200).json({
-        status: 201,
+      status: 201,
       data: {
         msg: "Project Updated Sucessfully",
         fetchSprint,
@@ -132,13 +135,11 @@ export const UpdateSprint = async (req, res) => {
 export const DeleteSprint = async (req, res) => {
   try {
     const id = req.params.id;
-    const fetchSprint = await SprintModel.findByIdAndUpdate(id, 
-        {
-        $set: {
-          "isDeleted": true,
-        },
+    const fetchSprint = await SprintModel.findByIdAndUpdate(id, {
+      $set: {
+        isDeleted: true,
       },
-    );
+    });
     res.status(200).json({
       status: 201,
       data: {

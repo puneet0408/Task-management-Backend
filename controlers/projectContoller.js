@@ -1,7 +1,7 @@
 import { ProjectModel } from "../Model/projectModel.js";
 import { CompanyModel } from "../Model/companyModel.js";
 import { UsersModel } from "../Model/userModel.js";
-import {SprintModel} from "../Model/sprintModel.js";
+import { SprintModel } from "../Model/sprintModel.js";
 
 export const getAllProjects = async (req, res) => {
   try {
@@ -79,23 +79,25 @@ export const createProject = async (req, res) => {
         },
       });
     }
-    if (
-      Companydtails.limit.maxProjects >= Companydtails?.usage?.projectsCount
-    ) {
+    
+    const projectCount = await ProjectModel.countDocuments({
+      companyId: companyId,isDeleted:false
+    });
+    if (projectCount >= Companydtails?.limit?.maxProjects) {
       return res.status(401).json({
         data: {
-          msg: "You reached your MAX limit contact to admin",
+          msg: "You reached your max project limit. Contact admin.",
+        },
+      });
+    }
+    if (!projectName || !companyId) {
+      return res.status(401).json({
+        data: {
+          msg: "project Name and Company details both Required",
         },
       });
     }
 
-    if (!projectName || !companyId) {
-      return res.status(401).json({
-        data: {
-          msg: "project Name and Company details both  required",
-        },
-      });
-    }
     const payload = {
       projectName,
       companyId,
@@ -104,14 +106,8 @@ export const createProject = async (req, res) => {
       status,
     };
     const fetchProject = await ProjectModel.create(payload);
-    await CompanyModel.updateOne(
-      { uuid: companyId },
-      {
-        $inc: { "usage.projectsCount": 1 },
-      },
-    );
-    res.status(201).json({
-      status: 201,
+    res.status(200).json({
+      status: 200,
       data: {
         msg: "Project created Sucessfully",
         fetchProject,
@@ -129,7 +125,9 @@ export const createProject = async (req, res) => {
 
 export const UpdateProject = async (req, res) => {
   try {
-    const { projectName, companyId } = req.body;
+     const {  companyId } = req;
+    const { projectName } = req.body;
+    
     if (!projectName || !companyId) {
       return res.status(400).json({
         data: {
@@ -140,7 +138,7 @@ export const UpdateProject = async (req, res) => {
     const id = req.params.id;
     const fetchProject = await ProjectModel.findByIdAndUpdate(id, req.body);
     res.status(200).json({
-      status: "success",
+     status: 200,
       data: {
         msg: "Project Updated Sucessfully",
         fetchProject,
@@ -165,7 +163,7 @@ export const DeleteProject = async (req, res) => {
       },
     });
     res.status(200).json({
-      status: "success",
+     status: 200,
       data: {
         msg: "Project Deleted Sucessfully",
         fetchProject,
@@ -201,7 +199,7 @@ export const markDefaultProject = async (req, res) => {
           "preferences.activeProject.projectName": project?.projectName,
         },
       },
-      { new: true },
+      { new: true }
     );
     return res.status(200).json({
       status: "success",
@@ -222,7 +220,7 @@ export const markDefaultSprint = async (req, res) => {
   try {
     const userId = req.user.id;
     const sprintId = req.params.sprintId;
-    const Sprint = await SprintModel.findById(sprintId);    
+    const Sprint = await SprintModel.findById(sprintId);
     if (!Sprint) {
       return res.status(404).json({
         status: "failed",
@@ -237,7 +235,7 @@ export const markDefaultSprint = async (req, res) => {
           "preferences.Activesprint.sprintName": Sprint?.sprintName,
         },
       },
-      { new: true },
+      { new: true }
     );
     return res.status(200).json({
       status: "success",
@@ -275,7 +273,7 @@ export const markLastPreferenceProject = async (req, res) => {
           "preferences.activeProject.projectName": project?.projectName,
         },
       },
-      { new: true },
+      { new: true }
     );
     return res.status(200).json({
       status: "success",
