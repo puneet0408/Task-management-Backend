@@ -2,7 +2,9 @@ import { TaskModel } from "../Model/taskModel.js";
 import { NotificationModel } from "../Model/notification.js";
 import mongoose from "mongoose";
 import { getIO } from "../socket/socket.js";
+import nodemailer from "nodemailer";
 import { ProjectModel } from "../Model/projectModel.js";
+import { UsersModel } from "../Model/userModel.js";
 export const getAllTask = async (req, res) => {
   try {
     const {
@@ -160,7 +162,7 @@ export const getAllTask = async (req, res) => {
           subtasks: 1,
           comments: 1,
           due_date: 1,
-          taskId:1,
+          taskId: 1,
         },
       },
       ...(limit ? [{ $limit: Number(limit) }] : []),
@@ -227,8 +229,6 @@ export const createTask = async (req, res) => {
       });
     }
     const projectDetails = await ProjectModel.findById(projectId);
-    console.log(projectDetails, "projectDetails");
-
     let updatetaskCounterinproject = {
       ...projectDetails,
       taskCounter: projectDetails?.taskCounter + 1,
@@ -258,23 +258,54 @@ export const createTask = async (req, res) => {
       comments,
       due_date,
     };
-    const task = await TaskModel.create(payload);
-    console.log("Task Created");
-    console.log(task);
-    if (task.assignedTo) {
-      console.log("Creating Notification");
+    let commingComment = comments;
+    let latestComment = new Array();
+    for (let i = 0; i < commingComment.length; i++) {
+      if (!commingComment[i]._id) {
+        latestComment.push(commingComment[i]);
+      }
+    }
+    for (let i = 0; i < latestComment.length; i++) {
+      const comment = latestComment[i];
+      if (comment.mentionedUserIds?.length) {
+        for (let j = 0; j < comment.mentionedUserIds.length; j++) {
+          const userId = comment.mentionedUserIds[j];
+          const getuser = await UsersModel.findById(userId);
+          if (!getuser) continue;
+          console.log(getuser, "getuser");
+          const transporter = nodemailer.createTransport({
+            service: "gmail",
+            auth: {
+              user: process.env.EMAIL_USER,
+              pass: process.env.EMAIL_PASS,
+            },
+          });
 
+          await transporter.sendMail({
+            from: `"My App" <${process.env.EMAIL_USER}>`,
+            to: getuser.email,
+            subject: "You were mentioned in a task comment",
+            html: `
+          <div style="font-family: Arial;">
+            <h2>Hello ${getuser.name}</h2>
+            <p>You were mentioned in a task comment.</p>
+            <p><strong>Comment:</strong> ${comment.text}</p>
+          </div>
+        `,
+          });
+        }
+      }
+    }
+    return;
+    const task = await TaskModel.create(payload);
+    if (task.assignedTo) {
       const notification = await NotificationModel.create({
         userId: task.assignedTo,
         title: "Task Assigned",
         message: `You were assigned task ${task.title}`,
         type: "TASK_ASSIGNED",
       });
-
-      console.log(notification);
-
       const io = getIO();
-
       io.to(task.assignedTo.toString()).emit("newNotification", notification);
     }
     res.status(201).json({
@@ -294,10 +325,60 @@ export const createTask = async (req, res) => {
 export const updateTask = async (req, res) => {
   try {
     const id = req.params.id;
+    let commingComment = req?.body?.comments;
+    let latestComment = new Array();
+    for (let i = 0; i < commingComment.length; i++) {
+      if (!commingComment[i]._id) {
+        latestComment.push(commingComment[i]);
+      }
+    }
+    for (let i = 0; i < latestComment.length; i++) {
+      const comment = latestComment[i];
+      if (comment.mentionedUserIds?.length) {
+        for (let j = 0; j < comment.mentionedUserIds.length; j++) {
+          const userId = comment.mentionedUserIds[j];
+          const getuser = await UsersModel.findById(userId);
+          if (!getuser) continue;
+          console.log(getuser, "getuser");
+          const transporter = nodemailer.createTransport({
+            service: "gmail",
+            auth: {
+              user: process.env.EMAIL_USER,
+              pass: process.env.EMAIL_PASS,
+            },
+          });
+
+          await transporter.sendMail({
+            from: `"My App" <${process.env.EMAIL_USER}>`,
+            to: getuser.email,
+            subject: "You were mentioned in a task comment",
+            html: `
+          <div style="font-family: Arial;">
+            <h2>Hello ${getuser.name}</h2>
+            <p>You were mentioned in a task comment.</p>
+            <p><strong>Comment:</strong> ${comment.text}</p>
+          </div>
+        `,
+          });
+        }
+      }
+    }
     const updateData = await TaskModel.findByIdAndUpdate(id, req.body, {
       new: true,
       runValidators: true,
     });
+        if (updateData.assignedTo) {
+      const notification = await NotificationModel.create({
+        userId: updateData.assignedTo,
+        title: "Task Update",
+        message: `Update ON task ${updateData.title}`,
+        type: "TASK_UPDATED",
+      });
+      console.log(notification,"notification");
+      
+      const io = getIO();
+      io.to(updateData.assignedTo.toString()).emit("newNotification", notification);
+    }
     res.status(200).json({
       status: "success",
       data: {

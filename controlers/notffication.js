@@ -4,20 +4,19 @@ import { getIO } from "../socket/socket.js";
 
 export const getAllNotification = async (req, res) => {
   try {
-    let query = {};
     const { loginUser } = req;
     if (!loginUser?.preferences?.activeProject?.projectId) {
       return res.status(401).json({
-        data: {
-          msg: "Unotherized login",
-        },
+        status: "fail",
+        msg: "Unauthorized login",
       });
     }
-
-    const notification = await NotificationModel.find(query);
+    const notification = await NotificationModel.find({
+      userId: loginUser._id,
+    }).sort({ createdAt: -1 });
     res.status(200).json({
       status: 200,
-        notification,
+      notification,
     });
   } catch (err) {
     res.status(400).json({
@@ -37,24 +36,20 @@ export const createNotification = async (req, res) => {
       });
     }
 
-    const notification =
-      await NotificationModel.create({
-        userId,
-        title,
-        message,
-        isRead,
-      });
+    const notification = await NotificationModel.create({
+      userId,
+      title,
+      message,
+      isRead,
+    });
     const io = getIO();
-    io.to(userId.toString()).emit(
-      "notification",
-      {
-        _id: notification._id,
-        title: notification.title,
-        message: notification.message,
-        isRead: notification.isRead,
-        createdAt: notification.createdAt,
-      }
-    );
+    io.to(userId.toString()).emit("notification", {
+      _id: notification._id,
+      title: notification.title,
+      message: notification.message,
+      isRead: notification.isRead,
+      createdAt: notification.createdAt,
+    });
     res.status(200).json({
       status: "Success",
       data: {
@@ -66,6 +61,53 @@ export const createNotification = async (req, res) => {
     res.status(400).json({
       status: "Fail",
       msg: err.message,
+    });
+  }
+};
+
+export const ReadNotification = async (req, res) => {
+  try {
+    const { loginUser } = req;
+
+    if (!loginUser?.preferences?.activeProject?.projectId) {
+      return res.status(401).json({
+        status: "fail",
+        msg: "Unauthorized login",
+      });
+    }
+
+    const { notificationId } = req.body;
+
+    let result;
+
+    if (notificationId === "all") {
+      result = await NotificationModel.updateMany(
+        { userId: loginUser._id, isRead: false },
+        { $set: { isRead: true } }
+      );
+    } else {
+      result = await NotificationModel.findOneAndUpdate(
+        {
+          _id: notificationId,
+          userId: loginUser._id,
+        },
+        {
+          $set: { isRead: true },
+        },
+        {
+          new: true,
+        }
+      );
+    }
+    res.status(200).json({
+      status: "success",
+      data: result,
+      msg: "Notification marked as read successfully",
+    });
+  } catch (error) {
+    res.status(400).json({
+      status: "fail",
+      msg: error.message,
     });
   }
 };
