@@ -145,6 +145,9 @@ export const getprojectSummaryWidgets = async (req, res) => {
                 unassignedTasks: {
                   $sum: { $cond: [{ $eq: ["$assignedTo", null] }, 1, 0] },
                 },
+                originalHrs: { $sum: "$originalTIme" },
+                remainingHrs: { $sum: "$RemainingTIme" },
+                completedHrs: { $sum: "$CompleteTIme" },
 
                 overdue: {
                   $sum: {
