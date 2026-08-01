@@ -16,6 +16,7 @@ const client = new S3Client({
 export const createPresignedUrlWithClient = async (req, res) => {
   try {
     const { fileName, fileType } = req.body;
+console.log(fileName, fileType ,"fileName, fileType ");
 
     if (!fileName || !fileType) {
       return res.status(400).json({
@@ -29,7 +30,7 @@ export const createPresignedUrlWithClient = async (req, res) => {
     const command = new PutObjectCommand({
       Bucket: bucket,
       Key: key,
-      ContentType: fileType,  // ✅ lock content type into signature
+      ContentType: fileType, 
     });
 
     const url = await getSignedUrl(client, command, {
@@ -53,7 +54,7 @@ export const createPresignedUrlWithClient = async (req, res) => {
 
 export const getPresignedViewUrl = async (req, res) => {
   try {
-    const { key } = req.query;
+    const { id: key } = req.params;
     const command = new GetObjectCommand({
       Bucket: process.env.AWS_BUCKET_NAME,
       Key: key,
