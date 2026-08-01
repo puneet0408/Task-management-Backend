@@ -16,7 +16,6 @@ const client = new S3Client({
 export const createPresignedUrlWithClient = async (req, res) => {
   try {
     const { fileName, fileType } = req.body;
-console.log(fileName, fileType ,"fileName, fileType ");
 
     if (!fileName || !fileType) {
       return res.status(400).json({
@@ -30,7 +29,7 @@ console.log(fileName, fileType ,"fileName, fileType ");
     const command = new PutObjectCommand({
       Bucket: bucket,
       Key: key,
-      ContentType: fileType, 
+      ContentType: fileType,  // ✅ lock content type into signature
     });
 
     const url = await getSignedUrl(client, command, {
